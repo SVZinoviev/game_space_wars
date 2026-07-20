@@ -25,6 +25,8 @@
 #define lcd_draw_bitmap ili9341_esp_driver_draw_bitmap
 #endif
 
+#include "game_renderer.h"
+
 static const char *TAG = "gfx_rect";
 
 /* Signalled from the panel ISR when a transfer completes, so the next flush
@@ -63,29 +65,60 @@ static const gfx_color_t black  = gfx_rgb888_to_rgb565(0, 0, 0);
 /* Filter coefficient (FILTER_COE); higher = smoother coordinates, more lag. */
 #define TOUCH_FILTER 0x10
 
-#define BTN_X0 (LCD_WIDTH - 70)
-#define BTN_Y0 5
-#define BTN_X1 (LCD_WIDTH - 6)
-#define BTN_Y1 30
+#define BTN_CCW_X0 3
+#define BTN_CCW_Y0 230
+#define BTN_CCW_X1 106
+#define BTN_CCW_Y1 180
+
+#define BTN_TH_X0 110
+#define BTN_TH_Y0 230
+#define BTN_TH_X1 211
+#define BTN_TH_Y1 180
+
+#define BTN_CW_X0 215
+#define BTN_CW_Y0 230
+#define BTN_CW_X1 318
+#define BTN_CW_Y1 180
 
 /* Owned by touch_task; the render loop only reads the volatiles below. */
 static struct ft6336_instance touch;
-static volatile bool g_muted;       /* toggled by the button zone callback  */
 static volatile bool g_touch_ok;    /* set once the controller is up        */
-static volatile bool g_touch_down;  /* panel currently pressed              */
-static volatile uint16_t g_touch_x; /* latest touch X (display space)       */
-static volatile uint16_t g_touch_y; /* latest touch Y (display space)       */
+
+static bool ccw = false;
+static bool cw = false;
+static bool th = false;
 
 /* Fired by ft6336_poll() on a press-down inside the button zone. */
-static void on_button(struct ft6336_instance *pinstance, uint16_t x, uint16_t y,
+static void on_ccw_button(struct ft6336_instance *pinstance, uint16_t x, uint16_t y,
                       void *puser)
 {
     (void)pinstance;
     (void)x;
     (void)y;
     (void)puser;
-    g_muted = !g_muted;
-    ESP_LOGI(TAG, "button -> %s", g_muted ? "MUTE" : "ON");
+    ccw = true;
+}
+
+/* Fired by ft6336_poll() on a press-down inside the button zone. */
+static void on_th_button(struct ft6336_instance *pinstance, uint16_t x, uint16_t y,
+                      void *puser)
+{
+    (void)pinstance;
+    (void)x;
+    (void)y;
+    (void)puser;
+    th = true;
+}
+
+/* Fired by ft6336_poll() on a press-down inside the button zone. */
+static void on_cw_button(struct ft6336_instance *pinstance, uint16_t x, uint16_t y,
+                      void *puser)
+{
+    (void)pinstance;
+    (void)x;
+    (void)y;
+    (void)puser;
+    cw = true;
 }
 
 /* Dedicated input task: owns the FT6336U, dispatches zone callbacks and
@@ -105,21 +138,14 @@ static void touch_task(void *arg)
     touch.height = LCD_HEIGHT;
     touch.swap_xy = true;
     touch.invert_y = true;
-    ft6336_register_zone(&touch, BTN_X0, BTN_Y0, BTN_X1, BTN_Y1, on_button, NULL);
+    ft6336_register_zone(&touch, BTN_CCW_X0, BTN_CCW_Y0, BTN_CCW_X1, BTN_CCW_Y1, on_ccw_button, NULL);
+    ft6336_register_zone(&touch, BTN_TH_X0, BTN_TH_Y0, BTN_TH_X1, BTN_TH_Y1, on_th_button, NULL);
+    ft6336_register_zone(&touch, BTN_CW_X0, BTN_CW_Y0, BTN_CW_X1, BTN_CW_Y1, on_cw_button, NULL);
     g_touch_ok = true;
     ESP_LOGI(TAG, "FT6336U touch ready");
 
     while (true) {
         ft6336_poll(&touch);  /* read + dispatch zone callbacks (press edge) */
-        bool down;
-        uint16_t x, y;
-        if (ft6336_get_coordinates(&touch, &down, &x, &y) == FT6336_OK) {
-            g_touch_x = x;
-            g_touch_y = y;
-            g_touch_down = down;
-        }
-            g_touch_y = y;
-        //ESP_LOGI(TAG, "X: %d Y: %d", x, y);
         vTaskDelay(pdMS_TO_TICKS(5));  /* ~50 Hz input sampling */
     }
 }
@@ -146,12 +172,18 @@ void app_main(void)
     gfx_clear(&canvas, black);
 
     gfx_flush(&canvas);
-    ESP_LOGI(TAG, "drew rectangles on %ux%u canvas", LCD_WIDTH, LCD_HEIGHT);
 
-    /* Touch input runs in its own task; it owns the FT6336U. */
     xTaskCreate(touch_task, "touch", 4096, NULL, 5, NULL);
 
     while (true) {
+        gfx_clear(&canvas, black);
+
+        if (cw) {rotate_ship_cw(); cw = false;}
+        if (ccw) {rotate_ship_ccw(); ccw = false;}
+        if (th) {thrust_increase(); th = false;}
+
+        render_spaceship(&canvas);
+        render_buttons(&canvas);
         gfx_flush(&canvas);
     }
 }
