@@ -60,7 +60,8 @@ static float ship_angle = 180;
 static float ship_angle_speed = 0;
 static bool is_thrust = false;
 static float thrust = 0;
-//static const float ship_mass = 1.0f;
+
+static struct Vect2f translation = {0.0f, 0.0f};
 
 void render_spaceship(struct gfx *gfx)
 {
@@ -80,6 +81,11 @@ void render_spaceship(struct gfx *gfx)
     if (ship_angle < 0) {
         ship_angle += 360.0f;
     }
+
+    struct Vect2f thrust_vect = {0, -thrust};
+    thrust_vect = rotate(thrust_vect, ship_angle);
+    translation.x += thrust_vect.x;
+    translation.y += thrust_vect.y;
 
     // Rotate all points of the ship and draw it
     for (int n = 0; n < SHIP_PTS; n++) {
@@ -111,7 +117,8 @@ static struct Planet planets[] = {{.pos = {.x = 50.0f, .y = 88.0f}, .diameter = 
 void render_planets(struct gfx *gfx)
 {
     for (int n = 0; n < ARRAY_ELEMENTS_COUNT(planets); n++) {
-        gfx_circle(gfx, planets[n].pos.x, planets[n].pos.y, planets[n].diameter / 2, 2, orange, true, orange);
+        gfx_circle(gfx, planets[n].pos.x + translation.x, planets[n].pos.y + translation.y,
+                        planets[n].diameter / 2, 2, orange, true, orange);
     }
 }
 
