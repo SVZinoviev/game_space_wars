@@ -47,11 +47,12 @@ static void draw_contour(struct gfx *gfx, struct Vect2f *contour_points, size_t 
 static struct Vect2f ship[SHIP_PTS] = {{0, 14}, {5, -6}, {0, -4}, {-5, -6}}; 
 #define FLAME_PTS 4
 #define FLAME_TIP_IDX 2
-static struct Vect2f flame[FLAME_PTS] = {{0, -5}, {5, -8}, {0, -15}, {-5, -8}};
+static struct Vect2f flame[FLAME_PTS] = {{0, -5}, {5, -8}, {0, -9}, {-5, -8}};
 static struct Vect2f ship_pos = {160, 120};
 static float ship_angle = 180;
 static float ship_angle_speed = 0;
 static bool is_thrust = false;
+static float thrust = 0;
 
 void render_spaceship(struct gfx *gfx)
 {
@@ -61,6 +62,8 @@ void render_spaceship(struct gfx *gfx)
     ship_angle += ship_angle_speed;
     // Angle speed decays
     ship_angle_speed *= 0.9;
+    // Thrust decay
+    thrust *= 0.9;
 
     if (ship_angle > 360.0f) {
         ship_angle -= 360;
@@ -76,11 +79,11 @@ void render_spaceship(struct gfx *gfx)
     }
     draw_contour(gfx, rotated_ship, SHIP_PTS, ship_pos, orange);
 
-    if (is_thrust) {
+    if (thrust > 0.01) {
         for (int n = 0; n < FLAME_PTS; n++) {
             struct Vect2f pt = flame[n];
             if (n == FLAME_TIP_IDX) {
-                pt.y += rand() & 0x3; // Randomize flame length
+                pt.y += (-16 - (rand() & 0x3)) * thrust; // Randomize flame length
             }
             rotated_flame[n] = rotate(pt, ship_angle);
         }
@@ -128,4 +131,8 @@ void rotate_ship_ccw()
 void thrust_increase()
 {
     is_thrust = true;
+    // Increase thrust
+    if (thrust < 1.0f) {
+        thrust += 0.05f;
+    }
 }
