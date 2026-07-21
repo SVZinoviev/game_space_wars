@@ -3,6 +3,7 @@
 #include <string.h>
 
 static const gfx_color_t orange = gfx_rgb888_to_rgb565(210, 90, 22);
+static const gfx_color_t red_flame = gfx_rgb888_to_rgb565(127, 10, 30);
 static const gfx_color_t black = gfx_rgb888_to_rgb565(0, 0, 0);
 
 struct Vect2f {
@@ -29,28 +30,45 @@ static struct Vect2f rotate(struct Vect2f vect, float angle_deg)
     return vect_rotated; 
 }
 
+static void draw_contour(struct gfx *gfx, struct Vect2f *contour_points, size_t contour_points_num,
+                         struct Vect2f offset, gfx_color_t color)
+{
+    for (int n = 0; n < contour_points_num - 1; n++) {
+        gfx_line(gfx, contour_points[n].x + offset.x, contour_points[n].y + offset.y,
+                 contour_points[n + 1].x + offset.x, contour_points[n + 1].y + offset.y,
+                 1, color);
+    }
+    gfx_line(gfx, contour_points[contour_points_num - 1].x + offset.x, contour_points[contour_points_num - 1].y + offset.y,
+                  contour_points[0].x + offset.x, contour_points[0].y + offset.y,
+                  1, color);
+}
+
 #define SHIP_PTS 4
-static struct Vect2f ship[4] = {{0, 14}, {5, -6}, {0, -4}, {-5, -6}}; 
+static struct Vect2f ship[SHIP_PTS] = {{0, 14}, {5, -6}, {0, -4}, {-5, -6}}; 
+#define FLAME_PTS 4
+static struct Vect2f flame[FLAME_PTS] = {{0, -5}, {5, -8}, {0, -12}, {-5, -8}};
 static struct Vect2f ship_pos = {160, 120};
 static float ship_angle = 0;
+static bool is_thrust = false;
 
 void render_spaceship(struct gfx *gfx)
 {
     static struct Vect2f rotated_ship[SHIP_PTS];
+    static struct Vect2f rotated_flame[FLAME_PTS];
 
-    // Rotate all points
+    // Rotate all points of the ship and draw it
     for (int n = 0; n < SHIP_PTS; n++) {
         rotated_ship[n] = rotate(ship[n], ship_angle);
     }
+    draw_contour(gfx, rotated_ship, SHIP_PTS, ship_pos, orange);
 
-    for (int n = 0; n < SHIP_PTS - 1; n++) {
-        gfx_line(gfx, rotated_ship[n].x + ship_pos.x, rotated_ship[n].y + ship_pos.y,
-                 rotated_ship[n + 1].x + ship_pos.x, rotated_ship[n + 1].y + ship_pos.y,
-                 1, orange);
+    if (is_thrust) {
+        for (int n = 0; n < FLAME_PTS; n++) {
+            rotated_flame[n] = rotate(flame[n], ship_angle);
+        }
+        draw_contour(gfx, rotated_flame, FLAME_PTS, ship_pos, red_flame);
+        is_thrust = false;
     }
-    gfx_line(gfx, rotated_ship[SHIP_PTS - 1].x + ship_pos.x, rotated_ship[SHIP_PTS - 1].y + ship_pos.y,
-                  rotated_ship[0].x + ship_pos.x, rotated_ship[0].y + ship_pos.y,
-                  1, orange);
 }
 
 struct Button {
@@ -94,5 +112,5 @@ void rotate_ship_ccw()
 
 void thrust_increase()
 {
-    
+    is_thrust = true;
 }
