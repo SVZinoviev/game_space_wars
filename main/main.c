@@ -183,6 +183,7 @@ void app_main(void)
         if (th) {thrust_increase(); th = false;}
 
         render_spaceship(&canvas);
+        render_planets(&canvas);
         render_buttons(&canvas);
         gfx_flush(&canvas);
     }

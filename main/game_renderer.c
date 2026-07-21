@@ -2,6 +2,8 @@
 #include <math.h>
 #include <string.h>
 
+#define ARRAY_ELEMENTS_COUNT(x) (sizeof((x)) / (sizeof((x)[0])))
+
 static const gfx_color_t orange = gfx_rgb888_to_rgb565(210, 90, 22);
 static const gfx_color_t red_flame = gfx_rgb888_to_rgb565(127, 10, 30);
 static const gfx_color_t black = gfx_rgb888_to_rgb565(0, 0, 0);
@@ -30,6 +32,11 @@ static struct Vect2f rotate(struct Vect2f vect, float angle_deg)
     return vect_rotated; 
 }
 
+static float distance(struct Vect2f a, struct Vect2f b)
+{
+    return sqrt((a.x - b.x) * (a.x - b.x) + (a.y - b.y) * (a.y - b.y));
+}
+
 static void draw_contour(struct gfx *gfx, struct Vect2f *contour_points, size_t contour_points_num,
                          struct Vect2f offset, gfx_color_t color)
 {
@@ -53,6 +60,7 @@ static float ship_angle = 180;
 static float ship_angle_speed = 0;
 static bool is_thrust = false;
 static float thrust = 0;
+//static const float ship_mass = 1.0f;
 
 void render_spaceship(struct gfx *gfx)
 {
@@ -89,6 +97,21 @@ void render_spaceship(struct gfx *gfx)
         }
         draw_contour(gfx, rotated_flame, FLAME_PTS, ship_pos, red_flame);
         is_thrust = false;
+    }
+}
+
+struct Planet {
+    struct Vect2f pos;
+    unsigned int diameter;
+    float mass;
+};
+
+static struct Planet planets[] = {{.pos = {.x = 50.0f, .y = 88.0f}, .diameter = 24, .mass = 100000.0f}};
+
+void render_planets(struct gfx *gfx)
+{
+    for (int n = 0; n < ARRAY_ELEMENTS_COUNT(planets); n++) {
+        gfx_circle(gfx, planets[n].pos.x, planets[n].pos.y, planets[n].diameter / 2, 2, orange, true, orange);
     }
 }
 
