@@ -58,6 +58,18 @@ void render_spaceship(struct gfx *gfx)
     static struct Vect2f rotated_ship[SHIP_PTS];
     static struct Vect2f rotated_flame[FLAME_PTS];
 
+    ship_angle += ship_angle_speed;
+    // Angle speed decays
+    ship_angle_speed *= 0.9;
+
+    if (ship_angle > 360.0f) {
+        ship_angle -= 360;
+    }
+    // Wrap
+    if (ship_angle < 0) {
+        ship_angle += 360.0f;
+    }
+
     // Rotate all points of the ship and draw it
     for (int n = 0; n < SHIP_PTS; n++) {
         rotated_ship[n] = rotate(ship[n], ship_angle);
@@ -101,18 +113,15 @@ void render_buttons(struct gfx *gfx)
 
 void rotate_ship_cw()
 {
-    ship_angle += 3;
-    if (ship_angle > 360.0f) {
-        ship_angle -= 360;
+    if (ship_angle_speed < 20.0) {
+        ship_angle_speed += 1.0f;
     }
 } 
 
 void rotate_ship_ccw()
 {
-    ship_angle -= 3;
-    // Wrap
-    if (ship_angle < 0) {
-        ship_angle += 360.0f;
+    if (ship_angle_speed > -20.0f) {
+        ship_angle_speed -= 1.0f;
     }
 }
 
