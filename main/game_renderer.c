@@ -79,20 +79,16 @@ static struct Vect2f flame[FLAME_PTS] = {{0, -5}, {5, -8}, {0, -9}, {-5, -8}};
 static struct Vect2f ship_pos = {160, 120};
 static float ship_angle = 180;
 static float ship_angle_speed = 0;
+static const float ship_mass = 20;
 static bool is_thrust = false;
 static float thrust = 0;
 
-static struct Vect2f translation = {0.0f, 0.0f};
+static struct Vect2f velocity_vect = {0.0f, 0.0f};
+static struct Vect2f position = {0.0f, 0.0f};
 
-void render_spaceship(struct gfx *gfx)
+void calc_ship_dynamics()
 {
-    static struct Vect2f rotated_ship[SHIP_PTS];
-    static struct Vect2f rotated_flame[FLAME_PTS];
-
     ship_angle += ship_angle_speed;
-    // Angle speed decays
-    ship_angle_speed *= 0.9;
-    // Thrust decay
     thrust *= 0.9;
 
     if (ship_angle > 360.0f) {
@@ -103,10 +99,22 @@ void render_spaceship(struct gfx *gfx)
         ship_angle += 360.0f;
     }
 
-    struct Vect2f thrust_vect = {0, -thrust};
+    struct Vect2f thrust_vect = {0, -thrust / ship_mass};
     thrust_vect = rotate(thrust_vect, ship_angle);
-    translation.x += thrust_vect.x;
-    translation.y += thrust_vect.y;
+
+    // Integrate velocity
+    velocity_vect.x += thrust_vect.x;
+    velocity_vect.y += thrust_vect.y;
+
+    // Integrate position
+    position.x += velocity_vect.x;
+    position.y += velocity_vect.y;
+}
+
+void render_spaceship(struct gfx *gfx)
+{
+    static struct Vect2f rotated_ship[SHIP_PTS];
+    static struct Vect2f rotated_flame[FLAME_PTS];
 
     // Rotate all points of the ship and draw it
     for (int n = 0; n < SHIP_PTS; n++) {
@@ -138,7 +146,7 @@ static struct Planet planets[] = {{.pos = {.x = 50.0f, .y = 88.0f}, .diameter = 
 void render_planets(struct gfx *gfx)
 {
     for (int n = 0; n < ARRAY_ELEMENTS_COUNT(planets); n++) {
-        gfx_circle(gfx, planets[n].pos.x + translation.x, planets[n].pos.y + translation.y,
+        gfx_circle(gfx, planets[n].pos.x + position.x, planets[n].pos.y + position.y,
                         planets[n].diameter / 2, 2, orange, true, orange);
     }
 }
@@ -168,14 +176,14 @@ void render_buttons(struct gfx *gfx)
 void rotate_ship_cw()
 {
     if (ship_angle_speed < 20.0) {
-        ship_angle_speed += 1.0f;
+        ship_angle_speed += 0.2f;
     }
 } 
 
 void rotate_ship_ccw()
 {
     if (ship_angle_speed > -20.0f) {
-        ship_angle_speed -= 1.0f;
+        ship_angle_speed -= 0.2f;
     }
 }
 

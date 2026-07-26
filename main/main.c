@@ -186,6 +186,7 @@ void app_main(void)
         render_planets(&canvas);
         render_buttons(&canvas);
         gfx_flush(&canvas);
+        calc_ship_dynamics();
     }
 }
 
