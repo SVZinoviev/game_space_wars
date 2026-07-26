@@ -185,6 +185,7 @@ void app_main(void)
         render_spaceship(&canvas);
         render_planets(&canvas);
         render_buttons(&canvas);
+        render_parameters(&canvas);
         gfx_flush(&canvas);
         calc_ship_dynamics();
     }

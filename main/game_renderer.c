@@ -1,6 +1,10 @@
 #include "game_renderer.h"
 #include <math.h>
 #include <string.h>
+#include <stdio.h>
+
+#include "gfx_font.h"
+#include "lowpixel20_font.h"
 
 #define ARRAY_ELEMENTS_COUNT(x) (sizeof((x)) / (sizeof((x)[0])))
 
@@ -171,6 +175,21 @@ void render_buttons(struct gfx *gfx)
                       buttons[n].rect[1].x, buttons[n].rect[1].y,
                       1, buttons[n].color, false, black);
     }
+}
+
+void render_parameters(struct gfx *gfx)
+{
+    struct gfx_textbox tb;
+    gfx_textbox_init(&tb, &Lowrex20Pixel);
+    tb.fg_color = orange;
+    tb.scale = 1;
+    tb.transparent = false;
+    tb.x0 = 10;
+    tb.y0 = 10;
+
+    char str[40];
+    snprintf(str, sizeof(str) - 1, "V: %2.2f Sx: %2.2f Sy: %2.2f", vect_len(velocity_vect), position.x, position.y);
+    gfx_text_place(gfx, &tb, str);
 }
 
 void rotate_ship_cw()
