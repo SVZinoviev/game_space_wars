@@ -37,6 +37,27 @@ static float distance(struct Vect2f a, struct Vect2f b)
     return sqrt((a.x - b.x) * (a.x - b.x) + (a.y - b.y) * (a.y - b.y));
 }
 
+static struct Vect2f vect_sum(struct Vect2f a, struct Vect2f b)
+{
+    struct Vect2f sum;
+    sum.x = a.x + b.x;
+    sum.y = a.y + b.y;
+    return sum;
+}
+
+static struct Vect2f vect_diff(struct Vect2f a, struct Vect2f b)
+{
+    struct Vect2f sum;
+    sum.x = a.x - b.x;
+    sum.y = a.y - b.y;
+    return sum;
+}
+
+static float vect_len(struct Vect2f a)
+{
+    return sqrtf(a.x * a.x + a.y * a.y);
+}
+
 static void draw_contour(struct gfx *gfx, struct Vect2f *contour_points, size_t contour_points_num,
                          struct Vect2f offset, gfx_color_t color)
 {
