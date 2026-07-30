@@ -13,8 +13,6 @@
 
 static const gfx_color_t orange = gfx_rgb888_to_rgb565(210, 90, 22);
 static const gfx_color_t red_flame = gfx_rgb888_to_rgb565(127, 10, 30);
-//static const gfx_color_t blue = gfx_rgb888_to_rgb565(0, 0, 127);
-static const gfx_color_t black = gfx_rgb888_to_rgb565(0, 0, 0);
 
 struct Vect2f {
     float x;
@@ -182,21 +180,36 @@ struct Button {
     struct Vect2f rect[2];
     gfx_color_t color;
     const char *text;
+    bool is_pressed;
 };
 
 #define BTN_NUM 3
 static struct Button buttons[BTN_NUM] = {
-    {{{3,  230}, {106, 180}}, orange, "CCW"},
-    {{{110,230}, {211, 180}}, orange, "THR"},
-    {{{215,230}, {318, 180}}, orange, "CW"},
+    {{{3,  230}, {106, 200}}, orange, "CCW", false},
+    {{{110,230}, {211, 200}}, orange, "THR", false},
+    {{{215,230}, {318, 200}}, orange, " CW", false},
 };
 
 void render_buttons(struct gfx *gfx)
 {
+    struct gfx_textbox tb;
+    char str[40];
+    gfx_textbox_init(&tb, &Lowrex20Pixel);
+    tb.fg_color = orange;
+    tb.scale = 1;
+    tb.transparent = false;
+
     for (int n = 0; n < BTN_NUM; n++) {
         gfx_rect(gfx, buttons[n].rect[0].x, buttons[n].rect[0].y,
                       buttons[n].rect[1].x, buttons[n].rect[1].y,
-                      1, buttons[n].color, false, black);
+                      1, buttons[n].color, buttons[n].is_pressed, buttons[n].color);
+        buttons[n].is_pressed = false;
+
+        tb.x0 = buttons[n].rect[0].x + 30;
+        tb.y0 = buttons[n].rect[0].y - 24;
+
+        snprintf(str, sizeof(str) - 1, buttons[n].text);
+        gfx_text_place(gfx, &tb, str);
     }
 }
 
@@ -273,6 +286,7 @@ void render_parameters(struct gfx *gfx)
 
 void rotate_ship_cw()
 {
+    buttons[2].is_pressed = true;
     if (ship_angle_speed < 20.0) {
         ship_angle_speed += 0.2f;
     }
@@ -280,6 +294,7 @@ void rotate_ship_cw()
 
 void rotate_ship_ccw()
 {
+    buttons[0].is_pressed = true;
     if (ship_angle_speed > -20.0f) {
         ship_angle_speed -= 0.2f;
     }
@@ -287,9 +302,6 @@ void rotate_ship_ccw()
 
 void thrust_increase()
 {
+    buttons[1].is_pressed = true;
     is_thrust = true;
-    // Increase thrust
-    if (thrust < 1.0f) {
-        thrust += 0.05f;
-    }
 }
