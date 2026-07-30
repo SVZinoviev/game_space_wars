@@ -6,6 +6,9 @@
 #include "gfx_font.h"
 #include "lowpixel20_font.h"
 
+#define CENTER_X 160
+#define CENTER_Y 120
+
 #define ARRAY_ELEMENTS_COUNT(x) (sizeof((x)) / (sizeof((x)[0])))
 
 static const gfx_color_t orange = gfx_rgb888_to_rgb565(210, 90, 22);
@@ -62,6 +65,11 @@ static float vect_len(struct Vect2f a)
     return sqrtf(a.x * a.x + a.y * a.y);
 }
 
+static struct Vect2f vect_to_scalar_mul(struct Vect2f a, float scalar)
+{
+    return (struct Vect2f) {a.x * scalar, a.y * scalar};
+}
+
 static void draw_contour(struct gfx *gfx, struct Vect2f *contour_points, size_t contour_points_num,
                          struct Vect2f offset, gfx_color_t color)
 {
@@ -80,8 +88,8 @@ static struct Vect2f ship[SHIP_PTS] = {{0, 14}, {5, -6}, {0, -4}, {-5, -6}};
 #define FLAME_PTS 4
 #define FLAME_TIP_IDX 2
 static struct Vect2f flame[FLAME_PTS] = {{0, -5}, {5, -8}, {0, -9}, {-5, -8}};
-static struct Vect2f ship_pos = {160, 120};
-static float ship_angle = 180;
+static struct Vect2f ship_pos = {0, 0};
+static float ship_angle = 0;
 static float ship_angle_speed = 0;
 static const float ship_mass = 20;
 static bool is_thrust = false;
@@ -124,7 +132,7 @@ void render_spaceship(struct gfx *gfx)
     for (int n = 0; n < SHIP_PTS; n++) {
         rotated_ship[n] = rotate(ship[n], ship_angle);
     }
-    draw_contour(gfx, rotated_ship, SHIP_PTS, ship_pos, orange);
+    draw_contour(gfx, rotated_ship, SHIP_PTS, (struct Vect2f) {CENTER_X, CENTER_Y},  orange);
 
     if (thrust > 0.01) {
         for (int n = 0; n < FLAME_PTS; n++) {
@@ -134,8 +142,7 @@ void render_spaceship(struct gfx *gfx)
             }
             rotated_flame[n] = rotate(pt, ship_angle);
         }
-        draw_contour(gfx, rotated_flame, FLAME_PTS, ship_pos, red_flame);
-        is_thrust = false;
+        draw_contour(gfx, rotated_flame, FLAME_PTS, (struct Vect2f) {CENTER_X, CENTER_Y}, red_flame);
     }
 }
 
@@ -150,7 +157,7 @@ static struct Planet planets[] = {{.pos = {.x = 50.0f, .y = 88.0f}, .diameter = 
 void render_planets(struct gfx *gfx)
 {
     for (int n = 0; n < ARRAY_ELEMENTS_COUNT(planets); n++) {
-        gfx_circle(gfx, planets[n].pos.x + position.x, planets[n].pos.y + position.y,
+        gfx_circle(gfx, CENTER_X - planets[n].pos.x + ship_pos.x, CENTER_Y - planets[n].pos.y + ship_pos.y,
                         planets[n].diameter / 2, 2, orange, true, orange);
     }
 }
