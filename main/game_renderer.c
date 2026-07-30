@@ -14,7 +14,7 @@
 static const gfx_color_t orange = gfx_rgb888_to_rgb565(210, 90, 22);
 static const gfx_color_t red_flame = gfx_rgb888_to_rgb565(127, 10, 30);
 //static const gfx_color_t blue = gfx_rgb888_to_rgb565(0, 0, 127);
-//static const gfx_color_t black = gfx_rgb888_to_rgb565(0, 0, 0);
+static const gfx_color_t black = gfx_rgb888_to_rgb565(0, 0, 0);
 
 struct Vect2f {
     float x;
@@ -121,13 +121,54 @@ void render_spaceship(struct gfx *gfx)
     }
 }
 
+#define PLANETS_NUM 100
+
 struct Planet {
     struct Vect2f pos;
     unsigned int diameter;
     float mass;
 };
 
-static struct Planet planets[] = {{.pos = {.x = 50.0f, .y = 88.0f}, .diameter = 24, .mass = 100000.0f}};
+static struct Planet planets[PLANETS_NUM] = {
+    {.pos = {.x = -80.0f, .y = -22.0f}, .diameter = 4, .mass = 100000.0f},
+    {.pos = {.x = -54.0f, .y = -120.0f}, .diameter = 6, .mass = 200000.0f},
+    {.pos = {.x = 90.0f, .y = 80.0f}, .diameter = 2, .mass = 50000.0f},
+    {.pos = {.x = 0, .y = 0}, .diameter = 0, .mass = 0}
+};
+
+void generate_planets()
+{
+    int n = 0;
+
+    for (n = 0; n < ARRAY_ELEMENTS_COUNT(planets); n++) {
+        if (planets[n].mass == 0) {
+            break;
+        }
+    }
+
+    float rx, ry, dia;
+    for (; n < ARRAY_ELEMENTS_COUNT(planets); n++) {
+        while (1) {
+            rx = rand() & 0x7FF;
+            if (rx > 0) break;
+        }
+
+        while (1) {
+            ry = rand() & 0x7FF;
+            if (ry > 0) break;
+        }
+
+        while (1) {
+            dia = rand() & 0x0E;
+            if (dia) break;
+        }
+
+        planets[n].pos.x = rx - 2048;
+        planets[n].pos.y = ry - 2048;
+        planets[n].diameter = dia;
+        planets[n].mass = dia * 10000;
+    }
+}
 
 void render_planets(struct gfx *gfx)
 {

@@ -175,6 +175,8 @@ void app_main(void)
 
     xTaskCreate(touch_task, "touch", 4096, NULL, 5, NULL);
 
+    generate_planets();
+
     while (true) {
         gfx_clear(&canvas, black);
 
