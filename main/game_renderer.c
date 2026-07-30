@@ -147,12 +147,12 @@ void generate_planets()
     float rx, ry, dia;
     for (; n < ARRAY_ELEMENTS_COUNT(planets); n++) {
         while (1) {
-            rx = rand() & 0x7FF;
+            rx = rand() & 0xFFF;
             if (rx > 0) break;
         }
 
         while (1) {
-            ry = rand() & 0x7FF;
+            ry = rand() & 0xFFF;
             if (ry > 0) break;
         }
 
@@ -164,7 +164,7 @@ void generate_planets()
         planets[n].pos.x = rx - 2048;
         planets[n].pos.y = ry - 2048;
         planets[n].diameter = dia;
-        planets[n].mass = dia * 10000;
+        planets[n].mass = dia * dia * dia * 300;
     }
 }
 
