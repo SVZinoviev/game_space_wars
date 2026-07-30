@@ -13,7 +13,8 @@
 
 static const gfx_color_t orange = gfx_rgb888_to_rgb565(210, 90, 22);
 static const gfx_color_t red_flame = gfx_rgb888_to_rgb565(127, 10, 30);
-static const gfx_color_t black = gfx_rgb888_to_rgb565(0, 0, 0);
+//static const gfx_color_t blue = gfx_rgb888_to_rgb565(0, 0, 127);
+//static const gfx_color_t black = gfx_rgb888_to_rgb565(0, 0, 0);
 
 struct Vect2f {
     float x;
@@ -96,32 +97,6 @@ static bool is_thrust = false;
 static float thrust = 0;
 
 static struct Vect2f velocity_vect = {0.0f, 0.0f};
-static struct Vect2f position = {0.0f, 0.0f};
-
-void calc_ship_dynamics()
-{
-    ship_angle += ship_angle_speed;
-    thrust *= 0.9;
-
-    if (ship_angle > 360.0f) {
-        ship_angle -= 360;
-    }
-    // Wrap
-    if (ship_angle < 0) {
-        ship_angle += 360.0f;
-    }
-
-    struct Vect2f thrust_vect = {0, -thrust / ship_mass};
-    thrust_vect = rotate(thrust_vect, ship_angle);
-
-    // Integrate velocity
-    velocity_vect.x += thrust_vect.x;
-    velocity_vect.y += thrust_vect.y;
-
-    // Integrate position
-    position.x += velocity_vect.x;
-    position.y += velocity_vect.y;
-}
 
 void render_spaceship(struct gfx *gfx)
 {
@@ -184,6 +159,58 @@ void render_buttons(struct gfx *gfx)
     }
 }
 
+
+
+void calc_ship_dynamics()
+{
+    struct Vect2f gravity_vect = {0, 0};
+    // Simulate gravitational forces
+    // G * m1 * m2 / r^2
+    // Just for one object
+    for (int n = 0; n < ARRAY_ELEMENTS_COUNT(planets); n++) {
+        struct Vect2f g = vect_diff(ship_pos, planets[n].pos);
+        float gmag = vect_len(g);
+        float gravity = 10E-5 * ship_mass * planets[n].mass / (gmag * gmag);
+        g.x = -(g.x / gmag) * gravity;
+        g.y = -(g.y / gmag) * gravity;
+        gravity_vect = vect_sum(gravity_vect, g);
+    }
+
+    // Increase thrust
+    if (is_thrust) {
+        if (thrust < 5.0f) {
+            thrust += 0.1f;
+        }
+        is_thrust = false;
+    } else {
+        if (thrust > 0) {
+            thrust -= 0.2;
+            if (thrust < 0) thrust = 0;
+        }
+    }
+
+    ship_angle += ship_angle_speed;
+
+    if (ship_angle > 360.0f) {
+        ship_angle -= 360;
+    }
+    // Wrap
+    if (ship_angle < 0) {
+        ship_angle += 360.0f;
+    }
+
+    struct Vect2f thrust_vect = {0, -thrust / ship_mass};
+    thrust_vect = vect_sum(rotate(thrust_vect, ship_angle), gravity_vect);
+
+    // Integrate velocity
+    velocity_vect.x += thrust_vect.x;
+    velocity_vect.y += thrust_vect.y;
+
+    // Integrate position
+    ship_pos.x += velocity_vect.x;
+    ship_pos.y += velocity_vect.y;
+}
+
 void render_parameters(struct gfx *gfx)
 {
     struct gfx_textbox tb;
@@ -195,8 +222,12 @@ void render_parameters(struct gfx *gfx)
     tb.y0 = 10;
 
     char str[40];
-    snprintf(str, sizeof(str) - 1, "V: %2.2f Sx: %2.2f Sy: %2.2f", vect_len(velocity_vect), position.x, position.y);
+    snprintf(str, sizeof(str) - 1, "V: %02.0f\nSx: %+05.0f\nSy: %+05.0f", vect_len(velocity_vect), ship_pos.x, ship_pos.y);
     gfx_text_place(gfx, &tb, str);
+
+    //struct Vect2f grav_dir = vect_diff(gravity_vect, planets[0].pos);;
+    //grav_dir = vect_sum(ship_pos, gravity_vect);
+    //gfx_line(gfx, CENTER_X, CENTER_Y, CENTER_X + gravity_vect.x, CENTER_Y + gravity_vect.y, 2, blue);
 }
 
 void rotate_ship_cw()
