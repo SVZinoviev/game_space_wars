@@ -10,6 +10,9 @@ void generate_planets();
 void render_planets(struct gfx *gfx);
 void render_parameters(struct gfx *gfx);
 
+void generate_stars();
+void render_stars(struct gfx *gfx);
+
 void rotate_ship_cw();
 void rotate_ship_ccw();
 void thrust_increase();

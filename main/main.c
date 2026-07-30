@@ -176,6 +176,7 @@ void app_main(void)
     xTaskCreate(touch_task, "touch", 4096, NULL, 5, NULL);
 
     generate_planets();
+    generate_stars();
 
     while (true) {
         gfx_clear(&canvas, black);
@@ -184,6 +185,7 @@ void app_main(void)
         if (ccw) {rotate_ship_ccw(); ccw = false;}
         if (th) {thrust_increase(); th = false;}
 
+        render_stars(&canvas);
         render_spaceship(&canvas);
         render_planets(&canvas);
         render_buttons(&canvas);

@@ -176,6 +176,52 @@ void render_planets(struct gfx *gfx)
     }
 }
 
+#define STARS_COUNT 5000
+
+struct Star {
+    int16_t x;
+    int16_t y;
+
+    uint8_t radius;
+    gfx_color_t color;
+};
+
+static gfx_color_t stars_colors[] = {
+    gfx_rgb888_to_rgb565(34, 12, 12),
+    gfx_rgb888_to_rgb565(56, 56, 56),
+    gfx_rgb888_to_rgb565(90, 90, 70),
+    gfx_rgb888_to_rgb565(150, 150, 180),
+};
+
+static struct Star stars[STARS_COUNT];
+
+void generate_stars()
+{
+    for (size_t n = 0; n < STARS_COUNT; n++) {
+        int r = rand();
+        stars[n].x =  (r & 0x3FFF) - (0x3FFF >> 2);
+
+        r = rand();
+        stars[n].y = (r & 0x3FFF) - (0x3FFF >> 2);
+
+        stars[n].color = stars_colors[(stars[n].y) & 0x3];
+        stars[n].radius = ((stars[n].y >> 4) & 0x1);
+    }
+}
+
+void render_stars(struct gfx *gfx)
+{
+    for (size_t n = 0; n < STARS_COUNT; n++) {
+        int16_t px, py;
+        px = CENTER_X - stars[n].x + ship_pos.x;
+        py = CENTER_Y - stars[n].y + ship_pos.y;
+
+        if ((px > 0 && px < 320) && (py > 0 && py < 240)) {
+            gfx_circle(gfx, px, py, stars[n].radius, 1, stars[n].color, true, stars[n].color);
+        }
+    }
+}
+
 struct Button {
     struct Vect2f rect[2];
     gfx_color_t color;
